@@ -440,3 +440,23 @@ func assertSfidQueryResult(t *testing.T, expected, lastQuery string) {
 
 	assert.Equal(t, toDialect(expected), lastQuery)
 }
+
+
+func TestFillIDTransaction(t *testing.T) {
+	tx := db.Begin()
+	defer tx.Rollback()
+	var err error
+	err = tx.Create(&Order{UserID: 100, Product: "iPhone"}).Error
+	if err != nil {
+		panic(err)
+	}
+	err = tx.Create(&Order{UserID: 100, Product: "iPhone"}).Error
+	if err != nil {
+		panic(err)
+	}
+	_ = tx.Commit()
+
+	expected := `INSERT INTO orders_0 ("user_id", "product", id) VALUES`
+	lastQuery := middleware.LastQuery()
+	assert.Equal(t, toDialect(expected), lastQuery[0:len(expected)])
+}
